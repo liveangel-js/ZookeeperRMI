@@ -1,29 +1,23 @@
 package zookeeper.rmi;
 
-//public interface Configuration {
-//    String ZK_CONNECTION_STRING = "sjnitapp16.sjn.its.paypalcorp.com:43210";
-//    int ZK_SESSION_TIMEOUT = 5000;
-//    String ZK_REGISTRY_PATH = "/registry";
-//    String ZK_PROVIDER_PATH = ZK_REGISTRY_PATH + "/provider" ;
-//}
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Configuration{
+public class Configuration {
 
 
     private static final Logger LOG = LoggerFactory.getLogger(Configuration.class);
 
-    public static String getZKConnectionString(){
+    public static String getZKConnectionString() {
         return String.format("%s:%d", ConfVars.ZK_HOST.getStringValue(), ConfVars.ZK_PORT.getIntValue());
     }
 
-    public static String getProviderPath(){
+    public static String getProviderPath() {
         return String.format("/%s/%s/%s/%s", ConfVars.ZK_ROOTNODE.getStringValue(), ConfVars.ZK_SERVICE_PREFIX.getStringValue(), ConfVars.ZK_SERVICE_NAME.getStringValue(), ConfVars.ZK_SERVICE_PROVIDER.getStringValue());
     }
 
-    public static enum ConfVars{
+    public static enum ConfVars {
         ZK_HOST("zookeeper.host", "sjnitapp16.sjn.its.paypalcorp.com"),
         ZK_PORT("zookeeper.port", 43210),
         ZK_SESSION_TIMEOUT("zookeeper.session.timeout", 5000),
@@ -130,10 +124,12 @@ public class Configuration{
         public VarType getType() {
             return type;
         }
+
         enum VarType {
             STRING {
                 @Override
-                void checkType(String value) throws Exception {}
+                void checkType(String value) throws Exception {
+                }
             },
             INT {
                 @Override
@@ -178,6 +174,5 @@ public class Configuration{
         }
 
 
-
-        }
+    }
 }

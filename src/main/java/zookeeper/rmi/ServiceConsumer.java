@@ -21,85 +21,89 @@ import java.util.concurrent.ThreadLocalRandom;
  * Created by sjiang3 on 4/19/17.
  */
 public class ServiceConsumer {
-    private static final Logger LOG = LoggerFactory.getLogger(ServiceProvider. class);
+    private static final Logger LOG = LoggerFactory.getLogger(ServiceProvider.class);
     private CountDownLatch latch = new CountDownLatch(1);
     private volatile List<String> rmiURLList = new ArrayList<String>();
-    public ServiceConsumer(){
+
+    public ServiceConsumer() {
         ZooKeeper zk = connectServer();
         if (zk != null) {
-            watchNode( zk);
+            watchNode(zk);
         }
 
     }
+
     private ZooKeeper connectServer() {
         ZooKeeper zk = null;
         try {
-            zk = new ZooKeeper(Configuration.getZKConnectionString(), Configuration.ConfVars.ZK_SESSION_TIMEOUT.getIntValue() , new Watcher() {
+            zk = new ZooKeeper(Configuration.getZKConnectionString(), Configuration.ConfVars.ZK_SESSION_TIMEOUT.getIntValue(), new Watcher() {
                 @Override
                 public void process(WatchedEvent event) {
-                    if (event .getState() == Event.KeeperState.SyncConnected ) {
+                    if (event.getState() == Event.KeeperState.SyncConnected) {
                         latch.countDown();
                     }
                 }
             });
             latch.await();
         } catch (IOException | InterruptedException e) {
-            LOG.error("" , e );
+            LOG.error("", e);
         }
-        return zk ;
+        return zk;
     }
+
     private void watchNode(final ZooKeeper zk) {
         try {
             List<String> nodeList = zk.getChildren("/timetunnel/services/metaservice", new Watcher() {
                 @Override
                 public void process(WatchedEvent event) {
-                    if (event .getType() == Event.EventType.NodeChildrenChanged ) {
-                        watchNode( zk);
+                    if (event.getType() == Event.EventType.NodeChildrenChanged) {
+                        watchNode(zk);
                     }
                 }
             });
             List<String> dataList = new ArrayList<>();
             for (String node : nodeList) {
-                byte[] data = zk.getData("/timetunnel/services/metaservice"+ "/" + node, false , null);
+                byte[] data = zk.getData("/timetunnel/services/metaservice" + "/" + node, false, null);
                 dataList.add(new String(data));
             }
-            LOG.debug("node data: {}" , dataList );
-            rmiURLList = dataList ; // update service list
+            LOG.debug("node data: {}", dataList);
+            rmiURLList = dataList; // update service list
         } catch (KeeperException | InterruptedException e) {
-            LOG.error("" , e );
+            LOG.error("", e);
         }
     }
-    private String chooseService(){
+
+    private String chooseService() {
         int size = rmiURLList.size();
         if (size > 0) {
             String url;
             if (size == 1) {
                 url = rmiURLList.get(0);
-                LOG.debug("using only url: {}" , url );
+                LOG.debug("using only url: {}", url);
             } else {
                 ThreadLocalRandom.current().nextInt();
-                url = rmiURLList.get(ThreadLocalRandom.current().nextInt( size));
-                LOG.debug("using random url: {}" , url );
+                url = rmiURLList.get(ThreadLocalRandom.current().nextInt(size));
+                LOG.debug("using random url: {}", url);
             }
             return url;
-        }else{
+        } else {
             return null;
         }
     }
 
-    public void listAllMethod(){
+    public void listAllMethod() {
         String address = chooseService();
         Registry registry = null;
-        if(address==null){
+        if (address == null) {
             LOG.error(" rmi address is null");
         }
 
         try {
             String host = address.split("/")[2].split(":")[0];
             String port = address.split("/")[2].split(":")[1];
-            registry = LocateRegistry.getRegistry(host,Integer.valueOf(port));
+            registry = LocateRegistry.getRegistry(host, Integer.valueOf(port));
             String[] list = registry.list();
-            for(String s : list){
+            for (String s : list) {
                 LOG.debug("{}", s);
             }
         } catch (RemoteException e) {
@@ -110,27 +114,28 @@ public class ServiceConsumer {
 
     private <T> T lookupService(String url) {
         LOG.info("Find service ::" + url);
-        T remote = null ;
+        T remote = null;
         try {
-            remote = (T) Naming.lookup( url);
+            remote = (T) Naming.lookup(url);
         } catch (NotBoundException | MalformedURLException | RemoteException e) {
             if (e instanceof ConnectException) {
                 //  If connection interrupt, use first RMI url, to this simple retry to reduce exception
-                LOG.error("ConnectException -> url: {}" , url );
-                if (rmiURLList .size() != 0) {
-                    url = rmiURLList .get(0);
-                    return lookupService( url);
+                LOG.error("ConnectException -> url: {}", url);
+                if (rmiURLList.size() != 0) {
+                    url = rmiURLList.get(0);
+                    return lookupService(url);
                 }
             }
-            LOG.error("{}" , e );
+            LOG.error("{}", e);
         }
-        return remote ;
+        return remote;
     }
-    public <T> T lookup(String serviceName){
+
+    public <T> T lookup(String serviceName) {
         String serviceAddress = chooseService();
-        if(serviceAddress.endsWith("/")){
-            return lookupService(serviceAddress+serviceName);
-        }else{
+        if (serviceAddress.endsWith("/")) {
+            return lookupService(serviceAddress + serviceName);
+        } else {
             return lookupService(serviceAddress + "/" + serviceName);
         }
     }

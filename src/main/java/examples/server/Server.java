@@ -9,14 +9,14 @@ import zookeeper.rmi.ServiceProvider;
  */
 public class Server {
     public static void main(String[] args) throws Exception {
-        if (args .length != 2) {
-            System. err.println("please using command: java Server <rmi_host> <rmi_port>");
-            System. exit(-1);
+        if (args.length != 2) {
+            System.err.println("please using command: java Server <rmi_host> <rmi_port>");
+            System.exit(-1);
         }
 
 
         String host = args[0];
-        int port = Integer.parseInt (args[1]);
+        int port = Integer.parseInt(args[1]);
         // publish rmi to zookeeper
         ServiceProvider provider = new ServiceProvider();
         provider.publishToZookeeper(host, port);
@@ -25,6 +25,6 @@ public class Server {
         String serviceName = HelloService.class.getName();
         provider.registerService(host, port, serviceName, helloService);
 
-        Thread. sleep(Long.MAX_VALUE);
+        Thread.sleep(Long.MAX_VALUE);
     }
 }
