@@ -8,6 +8,13 @@ import zookeeper.rmi.ServiceProvider;
  * Created by sjiang3 on 4/20/17.
  */
 public class Server {
+
+    /**
+     * java Server localhost 30000
+     * java Server localhost 30001
+     * @param args
+     * @throws Exception
+     */
     public static void main(String[] args) throws Exception {
         if (args.length != 2) {
             System.err.println("please using command: java Server <rmi_host> <rmi_port>");

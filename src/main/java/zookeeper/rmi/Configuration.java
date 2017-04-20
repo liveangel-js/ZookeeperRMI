@@ -80,40 +80,6 @@ public class Configuration extends XMLConfiguration {
         return conf;
     }
 
-    public static void main(String args[]){
-        try {
-            XMLConfiguration config =new XMLConfiguration("zookeeper-rmi.xml");
-            System.out.println(config.getString("database.url"));
-            System.out.println(config.getString("database.port"));
-            ConfVars[] vars = ConfVars.values();
-            for (ConfVars v : vars) {
-                System.out.println(v);
-                if (v.getType() == ConfVars.VarType.BOOLEAN) {
-                    System.out.println(v.getBooleanValue());
-                } else if (v.getType() == ConfVars.VarType.LONG) {
-                    System.out.println(v.getLongValue());
-                } else if (v.getType() == ConfVars.VarType.INT) {
-                    System.out.println(v.getIntValue());
-                } else if (v.getType() == ConfVars.VarType.FLOAT) {
-                    System.out.println(v.getFloatValue());
-                } else if (v.getType() == ConfVars.VarType.STRING) {
-                    System.out.println(v.getStringValue());
-                } else {
-                    throw new RuntimeException("Unsupported VarType");
-                }
-            }
-
-            Configuration.getInstance();
-            System.out.println(Configuration.getInstance().getString(ConfVars.ZK_HOST));
-
-        } catch (ConfigurationException e) {
-            e.printStackTrace();
-        }
-    }
-
-
-
-
     public String getZKConnectionString() {
         return String.format("%s:%d", getString(ConfVars.ZK_HOST), getInt(ConfVars.ZK_PORT));
     }
