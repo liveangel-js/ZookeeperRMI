@@ -1,31 +1,305 @@
 package zookeeper.rmi;
 
 
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.XMLConfiguration;
+import org.apache.commons.configuration.tree.ConfigurationNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Configuration {
+import java.net.URL;
+import java.util.List;
 
-
+public class Configuration extends XMLConfiguration {
+    private static final long serialVersionUID = 47493058956938485L;
+    private static Configuration conf;
+    private static final String ZOOKEEPER_RMI_XML = "zookeeper-rmi.xml";
     private static final Logger LOG = LoggerFactory.getLogger(Configuration.class);
+    private Configuration(){
+        ConfVars[] vars = ConfVars.values();
+        for (ConfVars v : vars) {
+            if (v.getType() == ConfVars.VarType.BOOLEAN) {
+                this.setProperty(v.getVarName(), v.getBooleanValue());
+            } else if (v.getType() == ConfVars.VarType.LONG) {
+                this.setProperty(v.getVarName(), v.getLongValue());
+            } else if (v.getType() == ConfVars.VarType.INT) {
+                this.setProperty(v.getVarName(), v.getIntValue());
+            } else if (v.getType() == ConfVars.VarType.FLOAT) {
+                this.setProperty(v.getVarName(), v.getFloatValue());
+            } else if (v.getType() == ConfVars.VarType.STRING) {
+                this.setProperty(v.getVarName(), v.getStringValue());
+            } else {
+                throw new RuntimeException("Unsupported VarType");
+            }
+        }
+    }
+    private Configuration(URL url) throws ConfigurationException {
+        setDelimiterParsingDisabled(true);
+        load(url);
+    }
 
-    public static String getZKConnectionString() {
-        return String.format("%s:%d", ConfVars.ZK_HOST.getStringValue(), ConfVars.ZK_PORT.getIntValue());
+    /**
+     * Load from resource.
+     * url = Configuration.class.getResource(ZOOKEEPER_RMI_XML);
+     * @throws ConfigurationException
+     */
+    public static synchronized Configuration getInstance() {
+        if (conf != null) {
+            return conf;
+        }
+
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        URL url;
+
+        url = Configuration.class.getResource(ZOOKEEPER_RMI_XML);
+        if (url == null) {
+            ClassLoader cl = Configuration.class.getClassLoader();
+            if (cl != null) {
+                url = cl.getResource(ZOOKEEPER_RMI_XML);
+            }
+        }
+        if (url == null) {
+            url = classLoader.getResource(ZOOKEEPER_RMI_XML);
+        }
+
+        if (url == null) {
+            LOG.warn("Failed to load configuration, proceeding with a default");
+            conf = new Configuration();
+        } else {
+            try {
+                LOG.info("Load configuration from " + url);
+                conf = new Configuration(url);
+            } catch (ConfigurationException e) {
+                LOG.warn("Failed to load configuration from " + url + " proceeding with a default", e);
+                conf = new Configuration();
+            }
+        }
+
+        LOG.info("Zookeeper address : " + conf.getZKConnectionString());
+
+        return conf;
     }
-    public static String getProviderDir(){
-        return String.format("/%s/%s/%s/%s", ConfVars.ZK_ROOTNODE.getStringValue(), ConfVars.ZK_SERVICE_PREFIX.getStringValue(), ConfVars.ZK_SERVICE_NAME.getStringValue(), ConfVars.ZK_SERVICE_PROVIDERDIR.getStringValue());
+
+    public static void main(String args[]){
+        try {
+            XMLConfiguration config =new XMLConfiguration("zookeeper-rmi.xml");
+            System.out.println(config.getString("database.url"));
+            System.out.println(config.getString("database.port"));
+            ConfVars[] vars = ConfVars.values();
+            for (ConfVars v : vars) {
+                System.out.println(v);
+                if (v.getType() == ConfVars.VarType.BOOLEAN) {
+                    System.out.println(v.getBooleanValue());
+                } else if (v.getType() == ConfVars.VarType.LONG) {
+                    System.out.println(v.getLongValue());
+                } else if (v.getType() == ConfVars.VarType.INT) {
+                    System.out.println(v.getIntValue());
+                } else if (v.getType() == ConfVars.VarType.FLOAT) {
+                    System.out.println(v.getFloatValue());
+                } else if (v.getType() == ConfVars.VarType.STRING) {
+                    System.out.println(v.getStringValue());
+                } else {
+                    throw new RuntimeException("Unsupported VarType");
+                }
+            }
+
+            Configuration.getInstance();
+            System.out.println(Configuration.getInstance().getString(ConfVars.ZK_HOST));
+
+        } catch (ConfigurationException e) {
+            e.printStackTrace();
+        }
     }
-    public static String getProviderPath() {
-        return String.format("/%s/%s/%s/%s/%s", ConfVars.ZK_ROOTNODE.getStringValue(), ConfVars.ZK_SERVICE_PREFIX.getStringValue(), ConfVars.ZK_SERVICE_NAME.getStringValue(), ConfVars.ZK_SERVICE_PROVIDERDIR.getStringValue(), ConfVars.ZK_SERVICE_PROVIDER.getStringValue());
+
+
+
+
+    public String getZKConnectionString() {
+        return String.format("%s:%d", getString(ConfVars.ZK_HOST), getInt(ConfVars.ZK_PORT));
     }
+    public String getProviderDir(){
+        return String.format("/%s/%s/%s/%s", getString(ConfVars.ZK_ROOTNODE), getString(ConfVars.ZK_SERVICE_PREFIX), getString(ConfVars.ZK_SERVICE_NAME), getString(ConfVars.ZK_SERVICE_PROVIDERDIR));
+    }
+    public String getProviderPath() {
+        return String.format("/%s/%s/%s/%s/%s", getString(ConfVars.ZK_ROOTNODE), getString(ConfVars.ZK_SERVICE_PREFIX), getString(ConfVars.ZK_SERVICE_NAME), getString(ConfVars.ZK_SERVICE_PROVIDERDIR), getString(ConfVars.ZK_SERVICE_PROVIDER));
+    }
+
+    public int getZKSessionTimeout(){
+        return getInt(ConfVars.ZK_SESSION_TIMEOUT);
+    }
+    public String getZKRootNode(){
+        return getString(ConfVars.ZK_ROOTNODE);
+    }
+
+    public String getZKServicePREFIX(){
+        return getString(ConfVars.ZK_SERVICE_PREFIX);
+    }
+    public String getZKServiceName(){
+        return getString(ConfVars.ZK_SERVICE_NAME);
+    }
+    public String getZKServiceProviderDir(){
+        return getString(ConfVars.ZK_SERVICE_PROVIDERDIR);
+    }
+    public String getZKServiceProviderPath(){
+        return getString(ConfVars.ZK_SERVICE_PROVIDER);
+    }
+    public String getZKServiceConsumer(){
+        return getString(ConfVars.ZK_SERVICE_CONSUMER);
+    }
+
+    public String getString(ConfVars c) {
+
+        return getString(c.name(), c.getVarName(), c.getStringValue());
+    }
+
+    public String getString(String envName, String propertyName, String defaultValue) {
+        if (System.getenv(envName) != null) {
+            return System.getenv(envName);
+        }
+        if (System.getProperty(propertyName) != null) {
+            return System.getProperty(propertyName);
+        }
+
+        return getStringValue(propertyName, defaultValue);
+    }
+
+    public int getInt(ConfVars c) {
+        return getInt(c.name(), c.getVarName(), c.getIntValue());
+    }
+
+    public int getInt(String envName, String propertyName, int defaultValue) {
+        if (System.getenv(envName) != null) {
+            return Integer.parseInt(System.getenv(envName));
+        }
+
+        if (System.getProperty(propertyName) != null) {
+            return Integer.parseInt(System.getProperty(propertyName));
+        }
+        return getIntValue(propertyName, defaultValue);
+    }
+
+    public long getLong(ConfVars c) {
+        return getLong(c.name(), c.getVarName(), c.getLongValue());
+    }
+
+    public long getLong(String envName, String propertyName, long defaultValue) {
+        if (System.getenv(envName) != null) {
+            return Long.parseLong(System.getenv(envName));
+        }
+
+        if (System.getProperty(propertyName) != null) {
+            return Long.parseLong(System.getProperty(propertyName));
+        }
+        return getLongValue(propertyName, defaultValue);
+    }
+
+    public float getFloat(ConfVars c) {
+        return getFloat(c.name(), c.getVarName(), c.getFloatValue());
+    }
+
+    public float getFloat(String envName, String propertyName, float defaultValue) {
+        if (System.getenv(envName) != null) {
+            return Float.parseFloat(System.getenv(envName));
+        }
+        if (System.getProperty(propertyName) != null) {
+            return Float.parseFloat(System.getProperty(propertyName));
+        }
+        return getFloatValue(propertyName, defaultValue);
+    }
+
+    public boolean getBoolean(ConfVars c) {
+        return getBoolean(c.name(), c.getVarName(), c.getBooleanValue());
+    }
+
+    public boolean getBoolean(String envName, String propertyName, boolean defaultValue) {
+        if (System.getenv(envName) != null) {
+            return Boolean.parseBoolean(System.getenv(envName));
+        }
+
+        if (System.getProperty(propertyName) != null) {
+            return Boolean.parseBoolean(System.getProperty(propertyName));
+        }
+        return getBooleanValue(propertyName, defaultValue);
+    }
+
+    private String getStringValue(String name, String d) {
+        List<ConfigurationNode> properties = getRootNode().getChildren();
+        if (properties == null || properties.isEmpty()) {
+            return d;
+        }
+        for (ConfigurationNode p : properties) {
+            if (p.getChildren("name") != null && !p.getChildren("name").isEmpty()
+                    && name.equals(p.getChildren("name").get(0).getValue())) {
+                return (String) p.getChildren("value").get(0).getValue();
+            }
+        }
+        return d;
+    }
+
+    private int getIntValue(String name, int d) {
+        List<ConfigurationNode> properties = getRootNode().getChildren();
+        if (properties == null || properties.isEmpty()) {
+            return d;
+        }
+        for (ConfigurationNode p : properties) {
+            if (p.getChildren("name") != null && !p.getChildren("name").isEmpty()
+                    && name.equals(p.getChildren("name").get(0).getValue())) {
+                return Integer.parseInt((String) p.getChildren("value").get(0).getValue());
+            }
+        }
+        return d;
+    }
+
+    private long getLongValue(String name, long d) {
+        List<ConfigurationNode> properties = getRootNode().getChildren();
+        if (properties == null || properties.isEmpty()) {
+            return d;
+        }
+        for (ConfigurationNode p : properties) {
+            if (p.getChildren("name") != null && !p.getChildren("name").isEmpty()
+                    && name.equals(p.getChildren("name").get(0).getValue())) {
+                return Long.parseLong((String) p.getChildren("value").get(0).getValue());
+            }
+        }
+        return d;
+    }
+
+    private float getFloatValue(String name, float d) {
+        List<ConfigurationNode> properties = getRootNode().getChildren();
+        if (properties == null || properties.isEmpty()) {
+            return d;
+        }
+        for (ConfigurationNode p : properties) {
+            if (p.getChildren("name") != null && !p.getChildren("name").isEmpty()
+                    && name.equals(p.getChildren("name").get(0).getValue())) {
+                return Float.parseFloat((String) p.getChildren("value").get(0).getValue());
+            }
+        }
+        return d;
+    }
+
+    private boolean getBooleanValue(String name, boolean d) {
+        List<ConfigurationNode> properties = getRootNode().getChildren();
+        if (properties == null || properties.isEmpty()) {
+            return d;
+        }
+        for (ConfigurationNode p : properties) {
+            if (p.getChildren("name") != null && !p.getChildren("name").isEmpty()
+                    && name.equals(p.getChildren("name").get(0).getValue())) {
+                return Boolean.parseBoolean((String) p.getChildren("value").get(0).getValue());
+            }
+        }
+        return d;
+    }
+
 
     public static enum ConfVars {
-        ZK_HOST("zookeeper.host", "sjnitapp16.sjn.its.paypalcorp.com"),
-        ZK_PORT("zookeeper.port", 43210),
+        ZK_HOST("zookeeper.host", ""),
+        ZK_PORT("zookeeper.port", 2199),
         ZK_SESSION_TIMEOUT("zookeeper.session.timeout", 5000),
-        ZK_ROOTNODE("zookeeper.rootnode", "timetunnel"),
-        ZK_SERVICE_PREFIX("zookeeper.service.prefix", "services"),
-        ZK_SERVICE_NAME("zookeeper.service.name", "metaservice"),
+        ZK_ROOTNODE("zookeeper.rootnode", "project"),
+        ZK_SERVICE_PREFIX("zookeeper.service.prefix", "service_type"),
+        ZK_SERVICE_NAME("zookeeper.service.name", "service_name"),
         ZK_SERVICE_PROVIDERDIR("zookeeper.service.providers", "providers"),
         ZK_SERVICE_PROVIDER("zookeeper.service.provider", "provider"),
         ZK_SERVICE_CONSUMER("zookeeper.service.consumer", "consumer");
@@ -163,7 +437,7 @@ public class Configuration {
                 try {
                     checkType(value);
                 } catch (Exception e) {
-                    LOG.error("Exception in ZeppelinConfiguration while isType", e);
+                    LOG.error("Exception in Configuration while isType", e);
                     return false;
                 }
                 return true;

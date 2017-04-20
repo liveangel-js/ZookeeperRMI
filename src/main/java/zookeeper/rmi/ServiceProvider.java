@@ -23,8 +23,10 @@ public class ServiceProvider {
     private static final Logger LOG = LoggerFactory.getLogger(ServiceProvider.class);
 
     private CountDownLatch latch = new CountDownLatch(1);
+    private static final Configuration configuration = Configuration.getInstance();
 
     public ServiceProvider() {
+
 
     }
 
@@ -88,15 +90,11 @@ public class ServiceProvider {
         return url;
     }
 
-    public static void main(String args[]) {
-        LOG.info(Configuration.ConfVars.ZK_HOST.getVarName());
-        LOG.info(Configuration.ConfVars.ZK_HOST.getStringValue());
-    }
 
     private ZooKeeper connectServer() {
         ZooKeeper zk = null;
         try {
-            zk = new ZooKeeper(Configuration.getZKConnectionString(), Configuration.ConfVars.ZK_SESSION_TIMEOUT.getIntValue(), new Watcher() {
+            zk = new ZooKeeper(configuration.getZKConnectionString(), configuration.getZKSessionTimeout(), new Watcher() {
                 public void process(WatchedEvent event) {
                     if (event.getState() == Event.KeeperState.SyncConnected) {
                         latch.countDown();
@@ -118,10 +116,10 @@ public class ServiceProvider {
      * @param zk
      */
     private void createPreNode(ZooKeeper zk) {
-        String path = createNodeIfNotExists(zk, "/" + Configuration.ConfVars.ZK_ROOTNODE.getStringValue(), "This is root node".getBytes(), CreateMode.PERSISTENT);
-        path = createNodeIfNotExists(zk, path + "/" + Configuration.ConfVars.ZK_SERVICE_PREFIX.getStringValue(), "service type: rmi".getBytes(), CreateMode.PERSISTENT);
-        path = createNodeIfNotExists(zk, path + "/" + Configuration.ConfVars.ZK_SERVICE_NAME.getStringValue(), "This is service name".getBytes(), CreateMode.PERSISTENT);
-        path = createNodeIfNotExists(zk, path + "/" + Configuration.ConfVars.ZK_SERVICE_PROVIDERDIR.getStringValue(), "This is service name".getBytes(), CreateMode.PERSISTENT);
+        String path = createNodeIfNotExists(zk, "/" + configuration.getZKRootNode(), "This is root node".getBytes(), CreateMode.PERSISTENT);
+        path = createNodeIfNotExists(zk, path + "/" + configuration.getZKServicePREFIX(), "service type: rmi".getBytes(), CreateMode.PERSISTENT);
+        path = createNodeIfNotExists(zk, path + "/" + configuration.getZKServiceName(), "This is service name".getBytes(), CreateMode.PERSISTENT);
+        path = createNodeIfNotExists(zk, path + "/" + configuration.getZKServiceProviderDir(), "This is service name".getBytes(), CreateMode.PERSISTENT);
 
     }
 
@@ -163,7 +161,7 @@ public class ServiceProvider {
     private void registerServiceNode(ZooKeeper zk, String url) {
         try {
             byte[] data = url.getBytes();
-            String path = zk.create(Configuration.getProviderPath(), data, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL); // 创建一个临时性且有序的 ZNode
+            String path = zk.create(configuration.getProviderPath(), data, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL); // 创建一个临时性且有序的 ZNode
             LOG.debug("create zookeeper node ({} => {})", path, url);
         } catch (KeeperException e) {
             LOG.error("", e);

@@ -24,6 +24,7 @@ public class ServiceConsumer {
     private static final Logger LOG = LoggerFactory.getLogger(ServiceProvider.class);
     private CountDownLatch latch = new CountDownLatch(1);
     private volatile List<String> rmiURLList = new ArrayList<String>();
+    private static final Configuration configuration = Configuration.getInstance();
 
     public ServiceConsumer() {
         ZooKeeper zk = connectServer();
@@ -36,7 +37,7 @@ public class ServiceConsumer {
     private ZooKeeper connectServer() {
         ZooKeeper zk = null;
         try {
-            zk = new ZooKeeper(Configuration.getZKConnectionString(), Configuration.ConfVars.ZK_SESSION_TIMEOUT.getIntValue(), new Watcher() {
+            zk = new ZooKeeper(configuration.getZKConnectionString(), configuration.getZKSessionTimeout(), new Watcher() {
                 @Override
                 public void process(WatchedEvent event) {
                     if (event.getState() == Event.KeeperState.SyncConnected) {
@@ -53,7 +54,7 @@ public class ServiceConsumer {
 
     private void watchNode(final ZooKeeper zk) {
         try {
-            List<String> nodeList = zk.getChildren(Configuration.getProviderDir(), new Watcher() {
+            List<String> nodeList = zk.getChildren(configuration.getProviderDir(), new Watcher() {
                 @Override
                 public void process(WatchedEvent event) {
                     if (event.getType() == Event.EventType.NodeChildrenChanged) {
@@ -64,7 +65,7 @@ public class ServiceConsumer {
             });
             List<String> dataList = new ArrayList<>();
             for (String node : nodeList) {
-                byte[] data = zk.getData(Configuration.getProviderDir() + "/" + node, false, null);
+                byte[] data = zk.getData(configuration.getProviderDir() + "/" + node, false, null);
                 dataList.add(new String(data));
             }
             LOG.debug("node data: {}", dataList);
