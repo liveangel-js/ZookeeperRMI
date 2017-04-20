@@ -12,9 +12,11 @@ public class Configuration {
     public static String getZKConnectionString() {
         return String.format("%s:%d", ConfVars.ZK_HOST.getStringValue(), ConfVars.ZK_PORT.getIntValue());
     }
-
+    public static String getProviderDir(){
+        return String.format("/%s/%s/%s/%s", ConfVars.ZK_ROOTNODE.getStringValue(), ConfVars.ZK_SERVICE_PREFIX.getStringValue(), ConfVars.ZK_SERVICE_NAME.getStringValue(), ConfVars.ZK_SERVICE_PROVIDERDIR.getStringValue());
+    }
     public static String getProviderPath() {
-        return String.format("/%s/%s/%s/%s", ConfVars.ZK_ROOTNODE.getStringValue(), ConfVars.ZK_SERVICE_PREFIX.getStringValue(), ConfVars.ZK_SERVICE_NAME.getStringValue(), ConfVars.ZK_SERVICE_PROVIDER.getStringValue());
+        return String.format("/%s/%s/%s/%s/%s", ConfVars.ZK_ROOTNODE.getStringValue(), ConfVars.ZK_SERVICE_PREFIX.getStringValue(), ConfVars.ZK_SERVICE_NAME.getStringValue(), ConfVars.ZK_SERVICE_PROVIDERDIR.getStringValue(), ConfVars.ZK_SERVICE_PROVIDER.getStringValue());
     }
 
     public static enum ConfVars {
@@ -24,6 +26,7 @@ public class Configuration {
         ZK_ROOTNODE("zookeeper.rootnode", "timetunnel"),
         ZK_SERVICE_PREFIX("zookeeper.service.prefix", "services"),
         ZK_SERVICE_NAME("zookeeper.service.name", "metaservice"),
+        ZK_SERVICE_PROVIDERDIR("zookeeper.service.providers", "providers"),
         ZK_SERVICE_PROVIDER("zookeeper.service.provider", "provider"),
         ZK_SERVICE_CONSUMER("zookeeper.service.consumer", "consumer");
         private String varName;

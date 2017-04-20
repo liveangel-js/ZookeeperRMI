@@ -53,17 +53,18 @@ public class ServiceConsumer {
 
     private void watchNode(final ZooKeeper zk) {
         try {
-            List<String> nodeList = zk.getChildren("/timetunnel/services/metaservice", new Watcher() {
+            List<String> nodeList = zk.getChildren(Configuration.getProviderDir(), new Watcher() {
                 @Override
                 public void process(WatchedEvent event) {
                     if (event.getType() == Event.EventType.NodeChildrenChanged) {
+                        LOG.info("Zookeeper provider node change");
                         watchNode(zk);
                     }
                 }
             });
             List<String> dataList = new ArrayList<>();
             for (String node : nodeList) {
-                byte[] data = zk.getData("/timetunnel/services/metaservice" + "/" + node, false, null);
+                byte[] data = zk.getData(Configuration.getProviderDir() + "/" + node, false, null);
                 dataList.add(new String(data));
             }
             LOG.debug("node data: {}", dataList);

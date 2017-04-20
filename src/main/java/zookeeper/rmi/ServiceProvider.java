@@ -120,7 +120,8 @@ public class ServiceProvider {
     private void createPreNode(ZooKeeper zk) {
         String path = createNodeIfNotExists(zk, "/" + Configuration.ConfVars.ZK_ROOTNODE.getStringValue(), "This is root node".getBytes(), CreateMode.PERSISTENT);
         path = createNodeIfNotExists(zk, path + "/" + Configuration.ConfVars.ZK_SERVICE_PREFIX.getStringValue(), "service type: rmi".getBytes(), CreateMode.PERSISTENT);
-        createNodeIfNotExists(zk, path + "/" + Configuration.ConfVars.ZK_SERVICE_NAME.getStringValue(), "This is service name".getBytes(), CreateMode.PERSISTENT);
+        path = createNodeIfNotExists(zk, path + "/" + Configuration.ConfVars.ZK_SERVICE_NAME.getStringValue(), "This is service name".getBytes(), CreateMode.PERSISTENT);
+        path = createNodeIfNotExists(zk, path + "/" + Configuration.ConfVars.ZK_SERVICE_PROVIDERDIR.getStringValue(), "This is service name".getBytes(), CreateMode.PERSISTENT);
 
     }
 
