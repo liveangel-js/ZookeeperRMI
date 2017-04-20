@@ -22,7 +22,8 @@ public class Server {
         provider.publishToZookeeper(host, port);
         // register method to rmi
         HelloService helloService = new HelloServiceImpl();
-        provider.registerService(host, port, helloService);
+        String serviceName = HelloService.class.getName();
+        provider.registerService(host, port, serviceName, helloService);
 
         Thread. sleep(Long.MAX_VALUE);
     }

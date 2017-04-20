@@ -58,13 +58,13 @@ public class ServiceProvider {
      * @param port
      * @param remote
      */
-    public void registerService(String host, int port, Remote remote){
-        String methodURL = String.format( "rmi://%s:%d/%s", host , port , remote.getClass().getName());
+    public void registerService(String host, int port, String serviceName, Remote remote){
+        String methodURL = String.format( "rmi://%s:%d/%s", host , port , serviceName);
 
         try {
             LocateRegistry.getRegistry(host, port);
             Naming.rebind(methodURL, remote);
-            LOG.debug("publish rmi service (url: {})" , methodURL );
+            LOG.debug("publish rmi service (url: {} object: {})" , methodURL, remote);
         } catch (RemoteException e) {
             LOG.error("", e);
         } catch (MalformedURLException e) {
