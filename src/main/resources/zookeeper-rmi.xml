@@ -1,0 +1,46 @@
+<!--<config>-->
+<!--<database>-->
+<!--<url>127.0.0.1</url>-->
+<!--<port>1521</port>-->
+<!--<login>admin</login>-->
+<!--<password>pass</password>-->
+<!--</database>-->
+<!--</config>-->
+<configuration>
+    <property>
+        <name>zookeeper.host</name>
+        <value>localhost</value>
+        <description>Server host</description>
+    </property>
+    <property>
+        <name>zookeeper.port</name>
+        <value>43210</value>
+        <description>Server port</description>
+    </property>
+    <property>
+        <name>zookeeper.rootnode</name>
+        <value>projectname</value>
+    </property>
+    <property>
+        <name>zookeeper.service.prefix</name>
+        <value>services</value>
+    </property>
+    <property>
+        <name>zookeeper.service.name</name>
+        <value>metaservice</value>
+    </property>
+    <property>
+        <name>ookeeper.service.providers</name>
+        <value>providers</value>
+    </property>
+    <property>
+        <name>zookeeper.service.provider</name>
+        <value>provider</value>
+    </property>
+    <property>
+        <name>zookeeper.service.consumer</name>
+        <value>consumer</value>
+    </property>
+
+
+</configuration>
